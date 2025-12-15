@@ -405,3 +405,188 @@ body {
 #auth-logout:hover {
     background: #4f46e5;
 }
+
+
+
+/* ===== MOBILE RESPONSIVENESS ===== */
+
+@media (max-width: 768px) {
+    
+    /* App-Layout: Menü nach oben */
+    #app {
+        flex-direction: column;
+    }
+
+    /* Menü horizontal */
+    #menu {
+        width: 100%;
+        flex-direction: row;
+        overflow-x: auto;
+        padding: 8px;
+        gap: 6px;
+    }
+
+    #menu button {
+        flex-shrink: 0;
+        padding: 8px 12px;
+        font-size: 0.85rem;
+        white-space: nowrap;
+    }
+
+    /* Content anpassen */
+    #content {
+        padding: 12px;
+    }
+
+    /* Cards schmaler */
+    .card {
+        margin: 10px 0;
+        padding: 16px;
+        border-radius: 8px;
+    }
+
+    /* Header stacken */
+    .ziele-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .ziele-header h2 {
+        font-size: 1.15rem;
+    }
+
+    /* Ziel-Add Formular stacken */
+    .ziel-add {
+        padding-top: 12px;
+    }
+
+    .ziel-add h4 {
+        font-size: 0.9rem;
+        margin-bottom: 8px;
+    }
+
+    .ziel-add input,
+    .ziel-add select {
+        display: block;
+        width: 100%;
+        margin: 0 0 8px 0;
+        padding: 10px;
+        font-size: 0.9rem;
+    }
+
+    .ziel-add button {
+        width: 100%;
+        padding: 10px;
+        font-size: 0.9rem;
+    }
+
+    /* Ziel-Items stacken bei sehr kleinen Screens */
+    .ziel-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 10px;
+    }
+
+    .ziel-info {
+        width: 100%;
+    }
+
+    .ziel-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    /* Todo Prio Badge kleiner */
+    .ziel-prio {
+        font-size: 0.7rem;
+        padding: 2px 6px;
+    }
+
+    /* Buttons anpassen */
+    .delete-btn,
+    #delete-done-todos,
+    #delete-gekauft,
+    #toggle-offen,
+    #toggle-wunsch-alt,
+    #todo-undo {
+        padding: 6px 12px;
+        font-size: 0.75rem;
+    }
+
+    /* Auth Box */
+    #auth-box input {
+        font-size: 0.95rem;
+        padding: 10px;
+    }
+
+    #auth-login,
+    #auth-logout {
+        font-size: 0.9rem;
+        padding: 10px;
+    }
+
+    #auth-logged-in {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    #auth-logout {
+        width: 100%;
+    }
+
+    /* Ziel-Blöcke Abstand reduzieren */
+    .ziel-bloecke {
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .ziel-block {
+        padding: 10px;
+    }
+
+    .ziel-block h3 {
+        font-size: 0.9rem;
+        margin-bottom: 8px;
+    }
+}
+
+/* Extra kleine Screens */
+@media (max-width: 480px) {
+    
+    #content {
+        padding: 8px;
+    }
+
+    .card {
+        padding: 12px;
+    }
+
+    .ziele-header h2 {
+        font-size: 1rem;
+    }
+
+    .ziel-text {
+        font-size: 0.9rem;
+    }
+
+    .ziel-datum {
+        font-size: 0.65rem;
+    }
+
+    .ziel-name {
+        font-size: 0.8rem;
+    }
+
+    #menu button {
+        padding: 6px 10px;
+        font-size: 0.8rem;
+    }
+
+    /* Touch-freundlichere Checkboxen */
+    .ziel-actions input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+    }
+}
