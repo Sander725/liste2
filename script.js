@@ -6,6 +6,21 @@ import {
   signOut
 } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
 
+import {
+  collection,
+  addDoc,
+  query,
+  where,
+  onSnapshot,
+  updateDoc,
+  deleteDoc,
+  doc,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
+
+
+
+
 const authBoxOut = document.getElementById("auth-logged-out");
 const authBoxIn = document.getElementById("auth-logged-in");
 const authUser = document.getElementById("auth-user");
@@ -17,45 +32,94 @@ const logoutBtn = document.getElementById("auth-logout");
 
 
 loginBtn.onclick = async () => {
-  const email = emailInput.value.trim();
-  const password = passwordInput.value.trim();
-  if (!email || !password) return;
+    const email = emailInput.value.trim();
+    const password = passwordInput.value.trim();
 
-  try {
-    // zuerst Login versuchen
-    await signInWithEmailAndPassword(auth, email, password);
-  } catch (err) {
-    // wenn Nutzer nicht existiert → registrieren
-    if (err.code === "auth/user-not-found") {
-      await createUserWithEmailAndPassword(auth, email, password);
-    } else {
-      alert(err.message);
+    if (!email || !password) {
+    alert("E-Mail und Passwort eingeben");
+    return;
     }
-  }
+
+    if (password.length < 6) {
+    alert("Passwort muss mindestens 6 Zeichen haben");
+    return;
+    }
+
+    try {
+    // ZUERST registrieren
+    await createUserWithEmailAndPassword(auth, email, password);
+    console.log("User registriert");
+    } catch (err) {
+    if (err.code === "auth/email-already-in-use") {
+        // DANN einloggen
+        await signInWithEmailAndPassword(auth, email, password);
+        console.log("User eingeloggt");
+    } else {
+        alert(err.code + ": " + err.message);
+    }
+    }
 };
 
+
 logoutBtn.onclick = async () => {
-  await signOut(auth);
+    await signOut(auth);
 };
 
 onAuthStateChanged(auth, user => {
-  if (user) {
-    // eingeloggt
+    if (user) {
     authBoxOut.classList.add("hidden");
     authBoxIn.classList.remove("hidden");
     authUser.textContent = `Eingeloggt als ${user.email}`;
 
-    // HIER später: Firestore-Listener mit user.uid starten
-    // startApp(user.uid);
-  } else {
-    // ausgeloggt
+    startApp(user.uid);   // ← DAS ist neu aktiv
+    } else {
     authBoxIn.classList.add("hidden");
     authBoxOut.classList.remove("hidden");
     authUser.textContent = "";
-  }
+
+    clearApp();           // ← wichtig beim Logout
+    }
 });
 
 
+
+let unsubscribe = null;
+
+function startApp(uid) {
+    // alten Listener stoppen (wichtig bei Logout/Login-Wechsel)
+    if (unsubscribe) unsubscribe();
+
+    const q = query(
+    collection(db, "items"),
+    where("owner", "==", uid)
+    );
+
+    unsubscribe = onSnapshot(q, snapshot => {
+    const data = snapshot.docs.map(d => ({
+        id: d.id,
+        ...d.data()
+    }));
+
+    // Aufteilen nach Typ
+    lebensziele = data.filter(x => x.type === "ziel");
+    wuensche   = data.filter(x => x.type === "wunsch");
+    todos      = data.filter(x => x.type === "todo");
+
+    render();
+    renderWuensche();
+    renderTodos();
+    });
+}
+
+function clearApp() {
+    lebensziele = [];
+    wuensche = [];
+    todos = [];
+
+    render();
+    renderWuensche();
+    renderTodos();
+}
 
 
 
@@ -220,40 +284,39 @@ function renderLebensziele() {
     });
 }
 
-function addZiel() {
+async function addZiel() {
     const text = textInput.value.trim();
     if (!text) {
         textInput.focus();
         return;
     }
 
-    lebensziele.push({
-        id: Date.now(),
+    await addDoc(collection(db, "items"), {
+        owner: auth.currentUser.uid,
+        type: "ziel",
         text,
         kategorie: katSelect.value,
         done: false,
-        created: new Date().toISOString()
+        created: serverTimestamp()
     });
 
     textInput.value = "";
-    saveLebensziele();
-    renderLebensziele();
     textInput.focus();
 }
 
 
-function toggleDone(id) {
-    const ziel = lebensziele.find(z => z.id === id);
-    ziel.done = !ziel.done;
-    saveLebensziele();
-    renderLebensziele();
+
+async function toggleDone(id, current) {
+    await updateDoc(doc(db, "items", id), {
+        done: !current
+    });
 }
 
-function deleteZiel(id) {
-    lebensziele = lebensziele.filter(z => z.id !== id);
-    saveLebensziele();
-    renderLebensziele();
+
+async function deleteZiel(id) {
+    await deleteDoc(doc(db, "items", id));
 }
+
 
 addBtn.addEventListener("click", addZiel);
 
