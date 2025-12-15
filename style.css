@@ -348,6 +348,9 @@ body {
 #auth-box {
     max-width: 920px;
     margin: 0 auto 20px;
+}
+
+#auth-logged-out {
     text-align: center;
 }
 
@@ -361,7 +364,7 @@ body {
     font-size: 0.9rem;
 }
 
-#auth-box button {
+#auth-login {
     width: 100%;
     padding: 10px;
     margin-top: 8px;
@@ -373,24 +376,32 @@ body {
     font-size: 0.9rem;
 }
 
-#auth-box button:hover {
+#auth-login:hover {
     background: #4f46e5;
 }
 
 #auth-logged-in {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 12px;
+    justify-content: space-between;
 }
 
 #auth-user {
     font-weight: 600;
+    white-space: nowrap;
 }
 
 #auth-logout {
-    width: auto;
-    padding: 6px 12px;
-    margin: 0;
+    padding: 6px 100px;
+    border: none;
+    border-radius: 8px;
+    background: #6366f1;
+    color: white;
+    cursor: pointer;
     font-size: 0.85rem;
+    white-space: nowrap;
+}
+
+#auth-logout:hover {
+    background: #4f46e5;
 }
