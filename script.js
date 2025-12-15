@@ -177,26 +177,32 @@ function pruefeWunschPasswort() {
  * NAVIGATION
  ************************************************************/
 
+function showList(id) {
+    document.querySelectorAll(".list").forEach(sec => {
+        sec.classList.toggle("hidden", sec.id !== id);
+    });
+}
+
 const buttons = document.querySelectorAll("#menu button");
-const sections = document.querySelectorAll(".list");
 
 buttons.forEach(btn => {
     btn.addEventListener("click", () => {
         const target = btn.dataset.list;
 
-        if (target === "ziele") {
-            if (!pruefeLebenszielePasswort()) return;
-        }
+        // Passwortschutz
+        if (target === "ziele" && !pruefeLebenszielePasswort()) return;
+        if (target === "wunsch" && !pruefeWunschPasswort()) return;
 
-        if (target === "wunsch") {
-            if (!pruefeWunschPasswort()) return;
-        }
+        // Liste anzeigen
+        showList(target);
 
-        sections.forEach(sec => {
-            sec.classList.toggle("hidden", sec.id !== target);
-        });
+        // 🔴 wichtig: sofort rendern
+        if (target === "todo")   renderTodos();
+        if (target === "ziele")  renderLebensziele();
+        if (target === "wunsch") renderWuensche();
     });
 });
+
 
 
 /************************************************************
@@ -645,3 +651,7 @@ renderLebensziele();
 renderWuensche();
 
 renderTodos();
+// Startansicht: Todo-Liste
+showList("todo");
+renderTodos();
+
