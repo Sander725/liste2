@@ -16,6 +16,21 @@
     </nav>
 
     <main id="content">
+
+        <div id="auth-box" class="card">
+            <div id="auth-logged-out">
+                <h3>Anmelden</h3>
+                <input id="auth-email" type="email" placeholder="E-Mail">
+                <input id="auth-password" type="password" placeholder="Passwort">
+                <button id="auth-login">Login / Registrieren</button>
+            </div>
+
+            <div id="auth-logged-in" class="hidden">
+                <span id="auth-user"></span>
+                <button id="auth-logout">Logout</button>
+            </div>
+        </div>
+
         <section id="todo" class="list card hidden">
 
             <div class="ziele-header">
@@ -104,6 +119,6 @@
     </main>
 </div>
 
-<script src="script.js"></script>
+<script type="module" src="./script.js"></script>
 </body>
 </html>

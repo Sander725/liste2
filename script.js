@@ -1,3 +1,64 @@
+import { auth, db } from "./firebase.js";
+import {
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut
+} from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
+
+const authBoxOut = document.getElementById("auth-logged-out");
+const authBoxIn = document.getElementById("auth-logged-in");
+const authUser = document.getElementById("auth-user");
+
+const emailInput = document.getElementById("auth-email");
+const passwordInput = document.getElementById("auth-password");
+const loginBtn = document.getElementById("auth-login");
+const logoutBtn = document.getElementById("auth-logout");
+
+
+loginBtn.onclick = async () => {
+  const email = emailInput.value.trim();
+  const password = passwordInput.value.trim();
+  if (!email || !password) return;
+
+  try {
+    // zuerst Login versuchen
+    await signInWithEmailAndPassword(auth, email, password);
+  } catch (err) {
+    // wenn Nutzer nicht existiert → registrieren
+    if (err.code === "auth/user-not-found") {
+      await createUserWithEmailAndPassword(auth, email, password);
+    } else {
+      alert(err.message);
+    }
+  }
+};
+
+logoutBtn.onclick = async () => {
+  await signOut(auth);
+};
+
+onAuthStateChanged(auth, user => {
+  if (user) {
+    // eingeloggt
+    authBoxOut.classList.add("hidden");
+    authBoxIn.classList.remove("hidden");
+    authUser.textContent = `Eingeloggt als ${user.email}`;
+
+    // HIER später: Firestore-Listener mit user.uid starten
+    // startApp(user.uid);
+  } else {
+    // ausgeloggt
+    authBoxIn.classList.add("hidden");
+    authBoxOut.classList.remove("hidden");
+    authUser.textContent = "";
+  }
+});
+
+
+
+
+
 /************************************************************
  * PASSWORTSCHUTZ – LEBENSZIELE
  ************************************************************/
