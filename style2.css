@@ -165,15 +165,6 @@ body {
     color: #6b7280;
 }
 
-/* ---------------- Wunschliste: Name rechts ---------------- */
-
-.ziel-name {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: #6366f1;
-    margin-right: 8px;
-}
-
 /* ---------------- Aktionen ---------------- */
 
 .ziel-actions {
@@ -309,11 +300,10 @@ body {
 
 
 
-/* ===== Einheitlicher Stil für alle Header-Buttons ===== */
+/* ===== Einheitlicher Stil wie "nur die Zukunft" ===== */
 
 .delete-btn,
 #delete-done-todos,
-#delete-gekauft,
 #toggle-offen,
 #toggle-wunsch-alt,
 #todo-undo {
@@ -329,7 +319,6 @@ body {
 
 .delete-btn:hover,
 #delete-done-todos:hover,
-#delete-gekauft:hover,
 #toggle-offen:hover,
 #toggle-wunsch-alt:hover,
 #todo-undo:hover {
@@ -343,54 +332,3 @@ body {
     border-color: #93c5fd;
 }
 
-/* ===== Auth Box ===== */
-
-#auth-box {
-    max-width: 920px;
-    margin: 0 auto 20px;
-    text-align: center;
-}
-
-#auth-box input {
-    display: block;
-    width: 100%;
-    padding: 8px 10px;
-    margin: 8px 0;
-    border: 1px solid #d1d5db;
-    border-radius: 8px;
-    font-size: 0.9rem;
-}
-
-#auth-box button {
-    width: 100%;
-    padding: 10px;
-    margin-top: 8px;
-    border: none;
-    border-radius: 8px;
-    background: #6366f1;
-    color: white;
-    cursor: pointer;
-    font-size: 0.9rem;
-}
-
-#auth-box button:hover {
-    background: #4f46e5;
-}
-
-#auth-logged-in {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-}
-
-#auth-user {
-    font-weight: 600;
-}
-
-#auth-logout {
-    width: auto;
-    padding: 6px 12px;
-    margin: 0;
-    font-size: 0.85rem;
-}

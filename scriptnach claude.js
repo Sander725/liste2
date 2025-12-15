@@ -598,62 +598,67 @@ deleteDoneBtn.onclick = deleteAllDoneTodos;
  * EINKAUFSLISTE
  ************************************************************/
 
-const einkaufBloecke = document.querySelectorAll("#einkauf .ziel-block");
+const einkaufListe = document.getElementById("einkauf-liste");
 const einkaufText = document.getElementById("einkauf-text");
 const einkaufDringlichkeit = document.getElementById("einkauf-dringlichkeit");
 const einkaufAddBtn = document.getElementById("einkauf-add");
 const deleteGekauftBtn = document.getElementById("delete-gekauft");
 
-function sortEinkauf(a, b) {
-  if (a.done !== b.done) return a.done - b.done;
-  return new Date(a.created) - new Date(b.created);
-}
-
 function renderEinkauf() {
-  einkaufBloecke.forEach(block => {
-    const container = block.querySelector(".ziel-container");
-    container.innerHTML = "";
+  einkaufListe.innerHTML = "";
 
-    const dring = parseInt(block.dataset.dringlichkeit);
+  einkauf
+    .slice()
+    .sort((a, b) => {
+      // 1. Ungekauft zuerst
+      if (a.done !== b.done) return a.done - b.done;
+      // 2. Nach Dringlichkeit (hoch zu niedrig)
+      if (b.dringlichkeit !== a.dringlichkeit) {
+        return b.dringlichkeit - a.dringlichkeit;
+      }
+      // 3. Nach Erstelldatum
+      return new Date(a.created) - new Date(b.created);
+    })
+    .forEach(item => {
+      const div = document.createElement("div");
+      div.className = `ziel-item einkauf prio-${item.dringlichkeit}`;
+      if (item.done) div.classList.add("erledigt");
 
-    einkauf
-      .filter(e => e.dringlichkeit === dring)
-      .sort(sortEinkauf)
-      .forEach(item => {
-        const div = document.createElement("div");
-        div.className = "ziel-item";
-        div.classList.add(item.done ? "erledigt" : "offen");
+      const info = document.createElement("div");
+      info.className = "ziel-info";
 
-        const info = document.createElement("div");
-        info.className = "ziel-info";
+      const text = document.createElement("span");
+      text.className = "ziel-text";
+      text.textContent = item.text;
+      if (item.done) {
+        text.style.textDecoration = "line-through";
+      }
 
-        const text = document.createElement("span");
-        text.className = "ziel-text";
-        text.textContent = item.text;
-        if (item.done) {
-          text.style.textDecoration = "line-through";
-        }
+      info.append(text);
 
-        info.append(text);
+      const actions = document.createElement("div");
+      actions.className = "ziel-actions";
 
-        const actions = document.createElement("div");
-        actions.className = "ziel-actions";
+      const dring = document.createElement("span");
+      dring.className = "ziel-prio";
+      dring.textContent = `D${item.dringlichkeit}`;
+      dring.title = "Klicken zum Ändern";
+      dring.onclick = () => cycleEinkaufDringlichkeit(item.id, item.dringlichkeit);
 
-        const check = document.createElement("input");
-        check.type = "checkbox";
-        check.checked = item.done;
-        check.onchange = () => toggleEinkauf(item.id, item.done);
+      const check = document.createElement("input");
+      check.type = "checkbox";
+      check.checked = item.done;
+      check.onchange = () => toggleEinkauf(item.id, item.done);
 
-        const del = document.createElement("button");
-        del.className = "delete-btn";
-        del.textContent = "Löschen";
-        del.onclick = () => deleteEinkauf(item.id);
+      const del = document.createElement("button");
+      del.className = "delete-btn";
+      del.textContent = "Löschen";
+      del.onclick = () => deleteEinkauf(item.id);
 
-        actions.append(check, del);
-        div.append(info, actions);
-        container.append(div);
-      });
-  });
+      actions.append(dring, check, del);
+      div.append(info, actions);
+      einkaufListe.append(div);
+    });
 }
 
 async function addEinkauf() {
@@ -684,6 +689,13 @@ async function toggleEinkauf(id, current) {
 
 async function deleteEinkauf(id) {
   await deleteDoc(doc(db, "items", id));
+}
+
+async function cycleEinkaufDringlichkeit(id, current) {
+  const newDring = current === 3 ? 1 : current + 1;
+  await updateDoc(doc(db, "items", id), {
+    dringlichkeit: newDring
+  });
 }
 
 async function deleteAllGekauft() {
