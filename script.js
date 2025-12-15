@@ -19,157 +19,145 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
 
 
-
+/************************************************************
+ * AUTHENTIFIZIERUNG
+ ************************************************************/
 
 const authBoxOut = document.getElementById("auth-logged-out");
 const authBoxIn = document.getElementById("auth-logged-in");
 const authUser = document.getElementById("auth-user");
-
 const emailInput = document.getElementById("auth-email");
 const passwordInput = document.getElementById("auth-password");
 const loginBtn = document.getElementById("auth-login");
 const logoutBtn = document.getElementById("auth-logout");
 
-
 loginBtn.onclick = async () => {
-    const email = emailInput.value.trim();
-    const password = passwordInput.value.trim();
+  const email = emailInput.value.trim();
+  const password = passwordInput.value.trim();
 
-    if (!email || !password) {
+  if (!email || !password) {
     alert("E-Mail und Passwort eingeben");
     return;
-    }
+  }
 
-    if (password.length < 6) {
+  if (password.length < 6) {
     alert("Passwort muss mindestens 6 Zeichen haben");
     return;
-    }
+  }
 
-    try {
-    // ZUERST registrieren
+  try {
     await createUserWithEmailAndPassword(auth, email, password);
     console.log("User registriert");
-    } catch (err) {
+  } catch (err) {
     if (err.code === "auth/email-already-in-use") {
-        // DANN einloggen
-        await signInWithEmailAndPassword(auth, email, password);
-        console.log("User eingeloggt");
+      await signInWithEmailAndPassword(auth, email, password);
+      console.log("User eingeloggt");
     } else {
-        alert(err.code + ": " + err.message);
+      alert(err.code + ": " + err.message);
     }
-    }
+  }
 };
-
 
 logoutBtn.onclick = async () => {
-    await signOut(auth);
+  await signOut(auth);
 };
-
-onAuthStateChanged(auth, user => {
-    if (user) {
-    authBoxOut.classList.add("hidden");
-    authBoxIn.classList.remove("hidden");
-    authUser.textContent = `Eingeloggt als ${user.email}`;
-
-    startApp(user.uid);   // ← DAS ist neu aktiv
-    } else {
-    authBoxIn.classList.add("hidden");
-    authBoxOut.classList.remove("hidden");
-    authUser.textContent = "";
-
-    clearApp();           // ← wichtig beim Logout
-    }
-});
-
-
 
 let unsubscribe = null;
 
-function startApp(uid) {
-    // alten Listener stoppen (wichtig bei Logout/Login-Wechsel)
-    if (unsubscribe) unsubscribe();
+onAuthStateChanged(auth, user => {
+  if (user) {
+    authBoxOut.classList.add("hidden");
+    authBoxIn.classList.remove("hidden");
+    authUser.textContent = `Eingeloggt als ${user.email}`;
+    startApp(user.uid);
+  } else {
+    authBoxIn.classList.add("hidden");
+    authBoxOut.classList.remove("hidden");
+    authUser.textContent = "";
+    clearApp();
+  }
+});
 
-    const q = query(
+
+/************************************************************
+ * FIREBASE ECHTZEIT-SYNCHRONISATION
+ ************************************************************/
+
+let lebensziele = [];
+let wuensche = [];
+let todos = [];
+
+function startApp(uid) {
+  if (unsubscribe) unsubscribe();
+
+  const q = query(
     collection(db, "items"),
     where("owner", "==", uid)
-    );
+  );
 
-    unsubscribe = onSnapshot(q, snapshot => {
+  unsubscribe = onSnapshot(q, snapshot => {
     const data = snapshot.docs.map(d => ({
-        id: d.id,
-        ...d.data()
+      id: d.id,
+      ...d.data()
     }));
 
-    // Aufteilen nach Typ
     lebensziele = data.filter(x => x.type === "ziel");
-    wuensche   = data.filter(x => x.type === "wunsch");
-    todos      = data.filter(x => x.type === "todo");
+    wuensche = data.filter(x => x.type === "wunsch");
+    todos = data.filter(x => x.type === "todo");
 
-    render();
+    renderLebensziele();
     renderWuensche();
     renderTodos();
-    });
+  });
 }
 
 function clearApp() {
-    lebensziele = [];
-    wuensche = [];
-    todos = [];
-
-    render();
-    renderWuensche();
-    renderTodos();
+  lebensziele = [];
+  wuensche = [];
+  todos = [];
+  renderLebensziele();
+  renderWuensche();
+  renderTodos();
 }
 
 
-
 /************************************************************
- * PASSWORTSCHUTZ – LEBENSZIELE
+ * PASSWORTSCHUTZ
  ************************************************************/
 
 const LEBENSZIEL_PASSWORT = "5202";
+const WUNSCH_PASSWORT = "2025";
 const LEBENSZIEL_SESSION_KEY = "lebensziele_unlock";
+const WUNSCH_SESSION_KEY = "wunschliste_unlock";
 
 function lebenszieleFreigeschaltet() {
-    return sessionStorage.getItem(LEBENSZIEL_SESSION_KEY) === "true";
+  return sessionStorage.getItem(LEBENSZIEL_SESSION_KEY) === "true";
 }
 
 function pruefeLebenszielePasswort() {
-    if (lebenszieleFreigeschaltet()) return true;
-
-    const eingabe = prompt("Passwort für Lebensziele:");
-    if (eingabe === LEBENSZIEL_PASSWORT) {
-        sessionStorage.setItem(LEBENSZIEL_SESSION_KEY, "true");
-        return true;
-    }
-
-    alert("Falsches Passwort");
-    return false;
+  if (lebenszieleFreigeschaltet()) return true;
+  const eingabe = prompt("Passwort für Lebensziele:");
+  if (eingabe === LEBENSZIEL_PASSWORT) {
+    sessionStorage.setItem(LEBENSZIEL_SESSION_KEY, "true");
+    return true;
+  }
+  alert("Falsches Passwort");
+  return false;
 }
 
-
-/************************************************************
- * PASSWORTSCHUTZ – WUNSCHLISTE
- ************************************************************/
-
-const WUNSCH_PASSWORT = "2025";
-const WUNSCH_SESSION_KEY = "wunschliste_unlock";
-
 function wunschFreigeschaltet() {
-    return sessionStorage.getItem(WUNSCH_SESSION_KEY) === "true";
+  return sessionStorage.getItem(WUNSCH_SESSION_KEY) === "true";
 }
 
 function pruefeWunschPasswort() {
-    if (wunschFreigeschaltet()) return true;
-
-    const eingabe = prompt("Passwort für Wunschliste:");
-    if (eingabe === WUNSCH_PASSWORT) {
-        sessionStorage.setItem(WUNSCH_SESSION_KEY, "true");
-        return true;
-    }
-
-    alert("Falsches Passwort");
-    return false;
+  if (wunschFreigeschaltet()) return true;
+  const eingabe = prompt("Passwort für Wunschliste:");
+  if (eingabe === WUNSCH_PASSWORT) {
+    sessionStorage.setItem(WUNSCH_SESSION_KEY, "true");
+    return true;
+  }
+  alert("Falsches Passwort");
+  return false;
 }
 
 
@@ -178,158 +166,140 @@ function pruefeWunschPasswort() {
  ************************************************************/
 
 function showList(id) {
-    document.querySelectorAll(".list").forEach(sec => {
-        sec.classList.toggle("hidden", sec.id !== id);
-    });
+  document.querySelectorAll(".list").forEach(sec => {
+    sec.classList.toggle("hidden", sec.id !== id);
+  });
 }
 
-const buttons = document.querySelectorAll("#menu button");
+document.querySelectorAll("#menu button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const target = btn.dataset.list;
 
-buttons.forEach(btn => {
-    btn.addEventListener("click", () => {
-        const target = btn.dataset.list;
+    if (target === "ziele" && !pruefeLebenszielePasswort()) return;
+    if (target === "wunsch" && !pruefeWunschPasswort()) return;
 
-        // Passwortschutz
-        if (target === "ziele" && !pruefeLebenszielePasswort()) return;
-        if (target === "wunsch" && !pruefeWunschPasswort()) return;
+    showList(target);
 
-        // Liste anzeigen
-        showList(target);
-
-        // 🔴 wichtig: sofort rendern
-        if (target === "todo")   renderTodos();
-        if (target === "ziele")  renderLebensziele();
-        if (target === "wunsch") renderWuensche();
-    });
+    if (target === "todo") renderTodos();
+    if (target === "ziele") renderLebensziele();
+    if (target === "wunsch") renderWuensche();
+  });
 });
-
 
 
 /************************************************************
  * LEBENSZIELE
  ************************************************************/
 
-const STORAGE_KEY = "lebensziele";
-let lebensziele = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-let nurOffen = false;
-
-// DOM
 const textInput = document.getElementById("ziel-text");
 const katSelect = document.getElementById("ziel-kategorie");
 const addBtn = document.getElementById("ziel-add-btn");
 const bloecke = document.querySelectorAll(".ziel-block");
 const toggleOffenBtn = document.getElementById("toggle-offen");
 
-
-
-function saveLebensziele() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(lebensziele));
-}
+let nurOffen = false;
 
 function sortZiele(a, b) {
-    if (a.done !== b.done) return a.done - b.done;
-    return new Date(a.created) - new Date(b.created);
+  if (a.done !== b.done) return a.done - b.done;
+  return new Date(a.created) - new Date(b.created);
 }
 
-textInput.addEventListener("keydown", e => {
-    if (e.key === "Enter") {
-        e.preventDefault();
-        addZiel();
-    }
-});
-
-
 function renderLebensziele() {
-    bloecke.forEach(block => {
-        const container = block.querySelector(".ziel-container");
-        container.innerHTML = "";
+  bloecke.forEach(block => {
+    const container = block.querySelector(".ziel-container");
+    container.innerHTML = "";
 
-        const kat = block.dataset.kategorie;
+    const kat = block.dataset.kategorie;
 
-        lebensziele
-            .filter(z => z.kategorie === kat)
-            .filter(z => !nurOffen || !z.done)
-            .sort(sortZiele)
-            .forEach(ziel => {
-                const item = document.createElement("div");
-                item.className = "ziel-item";
-                item.classList.add(ziel.done ? "erledigt" : "offen");
+    lebensziele
+      .filter(z => z.kategorie === kat)
+      .filter(z => !nurOffen || !z.done)
+      .sort(sortZiele)
+      .forEach(ziel => {
+        const item = document.createElement("div");
+        item.className = "ziel-item";
+        item.classList.add(ziel.done ? "erledigt" : "offen");
 
-                const info = document.createElement("div");
-                info.className = "ziel-info";
+        const info = document.createElement("div");
+        info.className = "ziel-info";
 
-                const text = document.createElement("span");
-                text.className = "ziel-text";
-                text.textContent = ziel.text;
+        const text = document.createElement("span");
+        text.className = "ziel-text";
+        text.textContent = ziel.text;
 
-                const datum = document.createElement("span");
-                datum.className = "ziel-datum";
-                datum.textContent =
-                    "erstellt am " +
-                    new Date(ziel.created).toLocaleDateString("de-DE");
+        const datum = document.createElement("span");
+        datum.className = "ziel-datum";
+        if (ziel.created && typeof ziel.created.toDate === "function") {
+          datum.textContent = "erstellt am " + ziel.created.toDate().toLocaleDateString("de-DE");
+        } else {
+          datum.textContent = "erstellt gerade …";
+        }
 
-                info.append(text, datum);
+        info.append(text, datum);
 
-                const actions = document.createElement("div");
-                actions.className = "ziel-actions";
+        const actions = document.createElement("div");
+        actions.className = "ziel-actions";
 
-                const checkbox = document.createElement("input");
-                checkbox.type = "checkbox";
-                checkbox.checked = ziel.done;
-                checkbox.onchange = () => toggleDone(ziel.id);
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = ziel.done;
+        checkbox.onchange = () => toggleZielDone(ziel.id, ziel.done);
 
-                const delBtn = document.createElement("button");
-                delBtn.className = "delete-btn";
-                delBtn.textContent = "Löschen";
-                delBtn.onclick = () => deleteZiel(ziel.id);
+        const delBtn = document.createElement("button");
+        delBtn.className = "delete-btn";
+        delBtn.textContent = "Löschen";
+        delBtn.onclick = () => deleteZiel(ziel.id);
 
-                actions.append(checkbox, delBtn);
-                item.append(info, actions);
-                container.append(item);
-            });
-    });
+        actions.append(checkbox, delBtn);
+        item.append(info, actions);
+        container.append(item);
+      });
+  });
 }
 
 async function addZiel() {
-    const text = textInput.value.trim();
-    if (!text) {
-        textInput.focus();
-        return;
-    }
-
-    await addDoc(collection(db, "items"), {
-        owner: auth.currentUser.uid,
-        type: "ziel",
-        text,
-        kategorie: katSelect.value,
-        done: false,
-        created: serverTimestamp()
-    });
-
-    textInput.value = "";
+  const text = textInput.value.trim();
+  if (!text) {
     textInput.focus();
+    return;
+  }
+
+  await addDoc(collection(db, "items"), {
+    owner: auth.currentUser.uid,
+    type: "ziel",
+    text,
+    kategorie: katSelect.value,
+    done: false,
+    created: serverTimestamp()
+  });
+
+  textInput.value = "";
+  textInput.focus();
 }
 
-
-
-async function toggleDone(id, current) {
-    await updateDoc(doc(db, "items", id), {
-        done: !current
-    });
+async function toggleZielDone(id, current) {
+  await updateDoc(doc(db, "items", id), {
+    done: !current
+  });
 }
-
 
 async function deleteZiel(id) {
-    await deleteDoc(doc(db, "items", id));
+  await deleteDoc(doc(db, "items", id));
 }
 
+textInput.addEventListener("keydown", e => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    addZiel();
+  }
+});
 
 addBtn.addEventListener("click", addZiel);
 
 toggleOffenBtn.addEventListener("click", () => {
-    nurOffen = !nurOffen;
-    toggleOffenBtn.classList.toggle("active", nurOffen);
-    renderLebensziele();
+  nurOffen = !nurOffen;
+  toggleOffenBtn.classList.toggle("active", nurOffen);
+  renderLebensziele();
 });
 
 
@@ -337,321 +307,285 @@ toggleOffenBtn.addEventListener("click", () => {
  * WUNSCHLISTE
  ************************************************************/
 
-const WUNSCH_KEY = "wunschliste";
-let wuensche = JSON.parse(localStorage.getItem(WUNSCH_KEY)) || [];
-let wunschNurOffen = true;
-
-// DOM
 const wunschListe = document.getElementById("wunsch-liste");
 const wunschText = document.getElementById("wunsch-text");
 const wunschName = document.getElementById("wunsch-name");
 const wunschAddBtn = document.getElementById("wunsch-add");
 const toggleAltBtn = document.getElementById("toggle-wunsch-alt");
 
-function saveWuensche() {
-    localStorage.setItem(WUNSCH_KEY, JSON.stringify(wuensche));
+let wunschNurOffen = true;
+
+function renderWuensche() {
+  wunschListe.innerHTML = "";
+
+  wuensche
+    .filter(w => !wunschNurOffen || !w.done)
+    .sort((a, b) => {
+      if (b.wichtigkeit !== a.wichtigkeit) {
+        return b.wichtigkeit - a.wichtigkeit;
+      }
+      return new Date(a.created) - new Date(b.created);
+    })
+    .forEach(w => {
+      const item = document.createElement("div");
+      item.className = "ziel-item";
+      item.classList.add(w.done ? "erledigt" : "offen");
+
+      const info = document.createElement("div");
+      info.className = "ziel-info";
+
+      const text = document.createElement("span");
+      text.className = "ziel-text";
+      text.textContent = w.text;
+
+      const datum = document.createElement("span");
+      datum.className = "ziel-datum";
+      if (w.created && typeof w.created.toDate === "function") {
+        datum.textContent = w.created.toDate().toLocaleDateString("de-DE");
+      } else {
+        datum.textContent = "erstellt gerade …";
+      }
+
+      info.append(text, datum);
+
+      const actions = document.createElement("div");
+      actions.className = "ziel-actions";
+
+      const name = document.createElement("span");
+      name.className = "ziel-name";
+      name.textContent = w.name;
+
+      const check = document.createElement("input");
+      check.type = "checkbox";
+      check.checked = w.done;
+      check.onchange = () => toggleWunsch(w.id, w.done);
+
+      const del = document.createElement("button");
+      del.className = "delete-btn";
+      del.textContent = "Löschen";
+      del.onclick = () => deleteWunsch(w.id);
+
+      actions.append(name, check, del);
+      item.append(info, actions);
+      wunschListe.append(item);
+    });
+}
+
+async function addWunsch() {
+  const text = wunschText.value.trim();
+  const name = wunschName.value.trim();
+  if (!text || !name) {
+    wunschText.focus();
+    return;
+  }
+
+  await addDoc(collection(db, "items"), {
+    owner: auth.currentUser.uid,
+    type: "wunsch",
+    text,
+    name,
+    wichtigkeit: 3,
+    done: false,
+    created: serverTimestamp()
+  });
+
+  wunschText.value = "";
+  wunschName.value = "";
+  wunschText.focus();
+}
+
+async function toggleWunsch(id, current) {
+  await updateDoc(doc(db, "items", id), {
+    done: !current
+  });
+}
+
+async function deleteWunsch(id) {
+  await deleteDoc(doc(db, "items", id));
+}
+
+function handleEnter(e) {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    addWunsch();
+  }
 }
 
 wunschText.addEventListener("keydown", handleEnter);
 wunschName.addEventListener("keydown", handleEnter);
-
-function handleEnter(e) {
-    if (e.key === "Enter") {
-        e.preventDefault();
-        addWunsch();
-    }
-}
-
-
-function renderWuensche() {
-    wunschListe.innerHTML = "";
-
-    wuensche
-        .filter(w => !wunschNurOffen || !w.done)
-        .sort((a, b) => {
-            if (b.wichtigkeit !== a.wichtigkeit)
-                return b.wichtigkeit - a.wichtigkeit;   // wichtig zuerst
-            return new Date(a.created) - new Date(b.created);
-        })
-
-        .forEach(w => {
-            const item = document.createElement("div");
-            item.className = "ziel-item";
-            item.classList.add(w.done ? "erledigt" : "offen");
-
-            /* ---------- LINKS: Wunsch + Datum ---------- */
-            const info = document.createElement("div");
-            info.className = "ziel-info";
-
-            const text = document.createElement("span");
-            text.className = "ziel-text";
-            text.textContent = w.wunsch;
-
-            const datum = document.createElement("span");
-            datum.className = "ziel-datum";
-            datum.textContent =
-                new Date(w.created).toLocaleDateString("de-DE");
-
-            info.append(text, datum);
-
-            /* ---------- RECHTS: Name + Checkbox + Löschen ---------- */
-            const actions = document.createElement("div");
-            actions.className = "ziel-actions";
-
-            const name = document.createElement("span");
-            name.className = "ziel-name";
-            name.textContent = w.name;
-
-            const check = document.createElement("input");
-            check.type = "checkbox";
-            check.checked = w.done;
-            check.onchange = () => toggleWunsch(w.id);
-
-            const del = document.createElement("button");
-            del.className = "delete-btn";
-            del.textContent = "Löschen";
-            del.onclick = () => deleteWunsch(w.id);
-
-            actions.append(name, check, del);
-
-            /* ---------- Zusammenbauen ---------- */
-            item.append(info, actions);
-            wunschListe.append(item);
-
-        });
-}
-
-function addWunsch() {
-    const wunsch = wunschText.value.trim();
-    const name = wunschName.value.trim();
-    if (!wunsch || !name) return;
-
-    wuensche.push({
-        id: Date.now(),
-        wunsch,
-        name,
-        done: false,
-        created: new Date().toISOString()
-    });
-
-    wunschText.value = "";
-    wunschName.value = "";
-    saveWuensche();
-    renderWuensche();
-    wunschText.focus();
-
-}
-
-function toggleWunsch(id) {
-    const w = wuensche.find(x => x.id === id);
-    w.done = !w.done;
-    saveWuensche();
-    renderWuensche();
-}
-
-function deleteWunsch(id) {
-    wuensche = wuensche.filter(w => w.id !== id);
-    saveWuensche();
-    renderWuensche();
-}
-
 wunschAddBtn.addEventListener("click", addWunsch);
 
 toggleAltBtn.addEventListener("click", () => {
-    wunschNurOffen = !wunschNurOffen;
-    toggleAltBtn.classList.toggle("active", !wunschNurOffen);
-    renderWuensche();
+  wunschNurOffen = !wunschNurOffen;
+  toggleAltBtn.classList.toggle("active", !wunschNurOffen);
+  renderWuensche();
 });
 
 
-
-
-
-
 /************************************************************
- * TODO-LISTE (erweitert)
+ * TODO-LISTE
  ************************************************************/
 
-const TODO_KEY = "todos";
-let todos = JSON.parse(localStorage.getItem(TODO_KEY)) || [];
-let deletedTodosBackup = null;
-let undoTimer = null;
-
-// DOM
 const todoListe = document.getElementById("todo-liste");
 const todoText = document.getElementById("todo-text");
 const todoPrio = document.getElementById("todo-prio");
 const todoAddBtn = document.getElementById("todo-add");
 const deleteDoneBtn = document.getElementById("delete-done-todos");
 
-// ---------- Speichern ----------
-function saveTodos() {
-    localStorage.setItem(TODO_KEY, JSON.stringify(todos));
-}
+let deletedTodosBackup = [];
+let undoTimer = null;
 
-// ---------- Render ----------
 function renderTodos() {
-    todoListe.innerHTML = "";
+  todoListe.innerHTML = "";
 
-    todos
-        .slice()
-        .sort((a, b) => {
-            if (b.wichtigkeit !== a.wichtigkeit)
-                return b.wichtigkeit - a.wichtigkeit;   // Wichtigkeit
-            return new Date(a.created) - new Date(b.created); // Erstellzeit
-        })
+  todos
+    .slice()
+    .sort((a, b) => {
+      if (b.wichtigkeit !== a.wichtigkeit) {
+        return b.wichtigkeit - a.wichtigkeit;
+      }
+      return new Date(a.created) - new Date(b.created);
+    })
+    .forEach(t => {
+      const item = document.createElement("div");
+      item.className = `ziel-item todo prio-${t.wichtigkeit}`;
+      if (t.done) item.classList.add("erledigt");
 
-        .forEach(t => {
-            const item = document.createElement("div");
-            item.className = `ziel-item todo prio-${t.wichtigkeit}`;
-            if (t.done) item.classList.add("erledigt");
+      const info = document.createElement("div");
+      info.className = "ziel-info";
 
+      const text = document.createElement("span");
+      text.className = "ziel-text";
+      text.textContent = t.text;
 
-            const info = document.createElement("div");
-            info.className = "ziel-info";
+      info.append(text);
 
-            const text = document.createElement("span");
-            text.className = "ziel-text";
-            text.textContent = t.text;
+      const actions = document.createElement("div");
+      actions.className = "ziel-actions";
 
-            info.append(text);
+      const prio = document.createElement("span");
+      prio.className = "ziel-prio";
+      prio.textContent = `P${t.wichtigkeit}`;
+      prio.title = "Klicken zum Ändern";
+      prio.onclick = () => cyclePriority(t.id, t.wichtigkeit);
 
-            const actions = document.createElement("div");
-            actions.className = "ziel-actions";
+      const check = document.createElement("input");
+      check.type = "checkbox";
+      check.checked = t.done;
+      check.onchange = () => toggleTodo(t.id, t.done);
 
-            // Klickbare Wichtigkeit
-            const prio = document.createElement("span");
-            prio.className = "ziel-prio";
-            prio.textContent = `P${t.wichtigkeit}`;
-            prio.title = "Klicken zum Ändern";
-            prio.onclick = () => cyclePriority(t.id);
+      const del = document.createElement("button");
+      del.className = "delete-btn";
+      del.textContent = "Löschen";
+      del.onclick = () => deleteTodo(t.id);
 
-            const check = document.createElement("input");
-            check.type = "checkbox";
-            check.checked = t.done;
-            check.onchange = () => toggleTodo(t.id);
-
-            const del = document.createElement("button");
-            del.className = "delete-btn";
-            del.textContent = "Löschen";
-            del.onclick = () => deleteTodo(t.id);
-
-            actions.append(prio, check, del);
-            item.append(info, actions);
-            todoListe.append(item);
-        });
-}
-
-// ---------- Aktionen ----------
-function addTodo() {
-    const text = todoText.value.trim();
-    if (!text) {
-        todoText.focus();
-        return;
-    }
-
-    todos.push({
-        id: Date.now(),
-        text,
-        wichtigkeit: Number(todoPrio.value),
-        done: false,
-        created: new Date().toISOString()
+      actions.append(prio, check, del);
+      item.append(info, actions);
+      todoListe.append(item);
     });
+}
 
-    todoText.value = "";
-    saveTodos();
-    renderTodos();
+async function addTodo() {
+  const text = todoText.value.trim();
+  if (!text) {
     todoText.focus();
+    return;
+  }
+
+  await addDoc(collection(db, "items"), {
+    owner: auth.currentUser.uid,
+    type: "todo",
+    text,
+    wichtigkeit: parseInt(todoPrio.value) || 3,
+    done: false,
+    created: serverTimestamp()
+  });
+
+  todoText.value = "";
+  todoText.focus();
 }
 
-function toggleTodo(id) {
-    const t = todos.find(x => x.id === id);
-    t.done = !t.done;
-    saveTodos();
-    renderTodos();
+async function toggleTodo(id, current) {
+  await updateDoc(doc(db, "items", id), {
+    done: !current
+  });
 }
 
-function deleteTodo(id) {
-    todos = todos.filter(t => t.id !== id);
-    saveTodos();
-    renderTodos();
+async function deleteTodo(id) {
+  await deleteDoc(doc(db, "items", id));
 }
 
-/* ---------- Wichtigkeit per Klick ändern ---------- */
-function cyclePriority(id) {
-    const t = todos.find(x => x.id === id);
-    t.wichtigkeit = t.wichtigkeit === 5 ? 1 : t.wichtigkeit + 1;
-    saveTodos();
-    renderTodos();
+async function cyclePriority(id, current) {
+  const newPrio = current === 5 ? 1 : current + 1;
+  await updateDoc(doc(db, "items", id), {
+    wichtigkeit: newPrio
+  });
 }
 
-/* ---------- Alle erledigten löschen + Undo ---------- */
-function deleteAllDoneTodos() {
-    deletedTodosBackup = todos.filter(t => t.done);
-    todos = todos.filter(t => !t.done);
-    saveTodos();
-    renderTodos();
+async function deleteAllDoneTodos() {
+  const doneTodos = todos.filter(t => t.done);
+  deletedTodosBackup = doneTodos;
 
-    showUndo();
+  for (const t of doneTodos) {
+    await deleteDoc(doc(db, "items", t.id));
+  }
+
+  showUndo();
 }
 
 function showUndo() {
-    let undo = document.getElementById("todo-undo");
-    if (!undo) {
-        undo = document.createElement("button");
-        undo.id = "todo-undo";
-        undo.textContent = "Rückgängig";
-        undo.style.marginLeft = "10px";
-        deleteDoneBtn.after(undo);
-    }
+  let undo = document.getElementById("todo-undo");
+  if (!undo) {
+    undo = document.createElement("button");
+    undo.id = "todo-undo";
+    undo.textContent = "Rückgängig";
+    undo.style.marginLeft = "10px";
+    deleteDoneBtn.after(undo);
+  }
 
-    undo.onclick = undoDelete;
-    clearTimeout(undoTimer);
+  undo.onclick = undoDelete;
+  clearTimeout(undoTimer);
 
-    undoTimer = setTimeout(() => {
-        undo.remove();
-        deletedTodosBackup = null;
-    }, 5000);
+  undoTimer = setTimeout(() => {
+    undo.remove();
+    deletedTodosBackup = [];
+  }, 5000);
 }
 
-function undoDelete() {
-    if (!deletedTodosBackup) return;
+async function undoDelete() {
+  if (!deletedTodosBackup.length) return;
 
-    todos = todos.concat(deletedTodosBackup);
-    deletedTodosBackup = null;
-    saveTodos();
-    renderTodos();
+  for (const t of deletedTodosBackup) {
+    await addDoc(collection(db, "items"), {
+      owner: auth.currentUser.uid,
+      type: t.type,
+      text: t.text,
+      wichtigkeit: t.wichtigkeit,
+      done: t.done,
+      created: t.created
+    });
+  }
 
-    const undo = document.getElementById("todo-undo");
-    if (undo) undo.remove();
+  deletedTodosBackup = [];
+
+  const undo = document.getElementById("todo-undo");
+  if (undo) undo.remove();
 }
 
-// ---------- Events ----------
+todoText.addEventListener("keydown", e => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    addTodo();
+  }
+});
+
 todoAddBtn.onclick = addTodo;
 deleteDoneBtn.onclick = deleteAllDoneTodos;
 
-todoText.addEventListener("keydown", e => {
-    if (e.key === "Enter") {
-        e.preventDefault();
-        addTodo();
-    }
-});
-
-
-
-
-
-
 
 /************************************************************
- * INITIAL RENDER
+ * INITIALISIERUNG
  ************************************************************/
 
-renderLebensziele();
-renderWuensche();
-
-renderTodos();
-// Startansicht: Todo-Liste
 showList("todo");
 renderTodos();
-
