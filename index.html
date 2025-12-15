@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Listen</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="app">
+    <nav id="menu">
+        <button data-list="todo">Todo</button>
+        <button data-list="einkauf">Einkauf</button>
+        <button data-list="wunsch">Geheimes 🔒</button>
+        <button data-list="ziele">Plände/Träume 🔒</button>
+    </nav>
+
+    <main id="content">
+        <section id="todo" class="list hidden">
+            <h2>Todo</h2>
+        </section>
+
+        <section id="einkauf" class="list hidden">
+            <h2>Einkaufsliste</h2>
+        </section>
+
+        <section id="wunsch" class="list card hidden">
+            <div class="ziele-header">
+                <h2>Was bringt das Christkind als nächstes?</h2>
+                <button id="toggle-wunsch-alt">Schon geschenkt!</button>
+            </div>
+
+            <div class="ziel-add">
+                <h4>Neuer Wunsch</h4>
+                <input id="wunsch-text" type="text" placeholder="Wunsch / Geschenk">
+                <input id="wunsch-name" type="text" placeholder="Name / Anlass">
+                <button id="wunsch-add">Rein damit</button>
+            </div>
+
+            <div id="wunsch-liste"></div>
+
+        </section>
+
+
+        <section id="ziele" class="list card">
+            <div class="ziele-header">
+                <h2>Pläne, Träume, und so weiter...</h2>
+                <button id="toggle-offen">Zeig mir nur die Zukunft!</button>
+            </div>
+
+            <div class="ziel-add">
+                <h4>Ziel hinzufügen</h4>
+                <input id="ziel-text" type="text" placeholder="Neues Lebensziel">
+                <select id="ziel-kategorie">
+                    <option value="realistisch">Morgen los?</option>
+                    <option value="mal">Für die Midlife-Crisis</option>
+                    <option value="traum">Träume ich?</option>
+                </select>
+                <button id="ziel-add-btn">Hinzufügen</button>
+            </div>            
+
+            <div class="ziel-bloecke">
+                <div class="ziel-block" data-kategorie="realistisch">
+                    <h3>Morgen los?</h3>
+                    <div class="ziel-container"></div>
+                </div>
+
+                <div class="ziel-block" data-kategorie="mal">
+                    <h3>Für die Midlife-Crisis</h3>
+                    <div class="ziel-container"></div>
+                </div>
+
+                <div class="ziel-block" data-kategorie="traum">
+                    <h3>Träume ich?</h3>
+                    <div class="ziel-container"></div>
+                </div>
+            </div>
+
+
+        </section>
+
+
+    </main>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
