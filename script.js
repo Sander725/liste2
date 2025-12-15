@@ -239,10 +239,11 @@ function renderWuensche() {
     wuensche
         .filter(w => !wunschNurOffen || !w.done)
         .sort((a, b) => {
-            const n = a.name.localeCompare(b.name);
-            if (n !== 0) return n;
+            if (b.wichtigkeit !== a.wichtigkeit)
+                return b.wichtigkeit - a.wichtigkeit;   // wichtig zuerst
             return new Date(a.created) - new Date(b.created);
         })
+
         .forEach(w => {
             const item = document.createElement("div");
             item.className = "ziel-item";
@@ -333,9 +334,190 @@ toggleAltBtn.addEventListener("click", () => {
 });
 
 
+
+
+
+
+/************************************************************
+ * TODO-LISTE (erweitert)
+ ************************************************************/
+
+const TODO_KEY = "todos";
+let todos = JSON.parse(localStorage.getItem(TODO_KEY)) || [];
+let deletedTodosBackup = null;
+let undoTimer = null;
+
+// DOM
+const todoListe = document.getElementById("todo-liste");
+const todoText = document.getElementById("todo-text");
+const todoPrio = document.getElementById("todo-prio");
+const todoAddBtn = document.getElementById("todo-add");
+const deleteDoneBtn = document.getElementById("delete-done-todos");
+
+// ---------- Speichern ----------
+function saveTodos() {
+    localStorage.setItem(TODO_KEY, JSON.stringify(todos));
+}
+
+// ---------- Render ----------
+function renderTodos() {
+    todoListe.innerHTML = "";
+
+    todos
+        .slice()
+        .sort((a, b) => {
+            if (b.wichtigkeit !== a.wichtigkeit)
+                return b.wichtigkeit - a.wichtigkeit;   // Wichtigkeit
+            return new Date(a.created) - new Date(b.created); // Erstellzeit
+        })
+
+        .forEach(t => {
+            const item = document.createElement("div");
+            item.className = `ziel-item todo prio-${t.wichtigkeit}`;
+            if (t.done) item.classList.add("erledigt");
+
+
+            const info = document.createElement("div");
+            info.className = "ziel-info";
+
+            const text = document.createElement("span");
+            text.className = "ziel-text";
+            text.textContent = t.text;
+
+            info.append(text);
+
+            const actions = document.createElement("div");
+            actions.className = "ziel-actions";
+
+            // Klickbare Wichtigkeit
+            const prio = document.createElement("span");
+            prio.className = "ziel-prio";
+            prio.textContent = `P${t.wichtigkeit}`;
+            prio.title = "Klicken zum Ändern";
+            prio.onclick = () => cyclePriority(t.id);
+
+            const check = document.createElement("input");
+            check.type = "checkbox";
+            check.checked = t.done;
+            check.onchange = () => toggleTodo(t.id);
+
+            const del = document.createElement("button");
+            del.className = "delete-btn";
+            del.textContent = "Löschen";
+            del.onclick = () => deleteTodo(t.id);
+
+            actions.append(prio, check, del);
+            item.append(info, actions);
+            todoListe.append(item);
+        });
+}
+
+// ---------- Aktionen ----------
+function addTodo() {
+    const text = todoText.value.trim();
+    if (!text) {
+        todoText.focus();
+        return;
+    }
+
+    todos.push({
+        id: Date.now(),
+        text,
+        wichtigkeit: Number(todoPrio.value),
+        done: false,
+        created: new Date().toISOString()
+    });
+
+    todoText.value = "";
+    saveTodos();
+    renderTodos();
+    todoText.focus();
+}
+
+function toggleTodo(id) {
+    const t = todos.find(x => x.id === id);
+    t.done = !t.done;
+    saveTodos();
+    renderTodos();
+}
+
+function deleteTodo(id) {
+    todos = todos.filter(t => t.id !== id);
+    saveTodos();
+    renderTodos();
+}
+
+/* ---------- Wichtigkeit per Klick ändern ---------- */
+function cyclePriority(id) {
+    const t = todos.find(x => x.id === id);
+    t.wichtigkeit = t.wichtigkeit === 5 ? 1 : t.wichtigkeit + 1;
+    saveTodos();
+    renderTodos();
+}
+
+/* ---------- Alle erledigten löschen + Undo ---------- */
+function deleteAllDoneTodos() {
+    deletedTodosBackup = todos.filter(t => t.done);
+    todos = todos.filter(t => !t.done);
+    saveTodos();
+    renderTodos();
+
+    showUndo();
+}
+
+function showUndo() {
+    let undo = document.getElementById("todo-undo");
+    if (!undo) {
+        undo = document.createElement("button");
+        undo.id = "todo-undo";
+        undo.textContent = "Rückgängig";
+        undo.style.marginLeft = "10px";
+        deleteDoneBtn.after(undo);
+    }
+
+    undo.onclick = undoDelete;
+    clearTimeout(undoTimer);
+
+    undoTimer = setTimeout(() => {
+        undo.remove();
+        deletedTodosBackup = null;
+    }, 5000);
+}
+
+function undoDelete() {
+    if (!deletedTodosBackup) return;
+
+    todos = todos.concat(deletedTodosBackup);
+    deletedTodosBackup = null;
+    saveTodos();
+    renderTodos();
+
+    const undo = document.getElementById("todo-undo");
+    if (undo) undo.remove();
+}
+
+// ---------- Events ----------
+todoAddBtn.onclick = addTodo;
+deleteDoneBtn.onclick = deleteAllDoneTodos;
+
+todoText.addEventListener("keydown", e => {
+    if (e.key === "Enter") {
+        e.preventDefault();
+        addTodo();
+    }
+});
+
+
+
+
+
+
+
 /************************************************************
  * INITIAL RENDER
  ************************************************************/
 
 renderLebensziele();
 renderWuensche();
+
+renderTodos();

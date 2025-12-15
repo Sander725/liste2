@@ -16,9 +16,30 @@
     </nav>
 
     <main id="content">
-        <section id="todo" class="list hidden">
-            <h2>Todo</h2>
+        <section id="todo" class="list card hidden">
+
+            <div class="ziele-header">
+                <h2>Todos</h2>
+                <button id="delete-done-todos">Weg damit!!!</button>
+            </div>
+
+            <div class="ziel-add">
+                <h4>Was gibt es zu tun?</h4>
+                <input id="todo-text" type="text" placeholder="Was steht an?">
+                <select id="todo-prio">
+                    <option value="5">Sehr wichtig</option>
+                    <option value="4">Wichtig</option>
+                    <option value="3">Mittel</option>
+                    <option value="2">Gering</option>
+                    <option value="1">Optional</option>
+                </select>
+                <button id="todo-add">Auf den Haufen dazu!</button>
+            </div>
+
+            <div id="todo-liste"></div>
+
         </section>
+
 
         <section id="einkauf" class="list hidden">
             <h2>Einkaufsliste</h2>

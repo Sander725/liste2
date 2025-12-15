@@ -227,3 +227,108 @@ body {
 .ziel-add button:hover {
     background: #4f46e5;
 }
+
+/* -------- Todo Wichtigkeit -------- */
+
+.ziel-prio {
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 12px;
+    white-space: nowrap;
+}
+
+/* Farben bewusst ruhig */
+.prio-5 { background: #fee2e2; color: #000000; } /* sehr wichtig */
+.prio-4 { background: #ffedd5; color: #000000; }
+.prio-3 { background: #fef9c3; color: #000000; }
+.prio-2 { background: #ecfeff; color: #000000; }
+.prio-1 { background: #f1f5f9; color: #000000; }
+
+/* ===== Todo: Wichtigkeit färbt ganze Zelle ===== */
+
+.ziel-item.todo {
+    border-width: 2px;
+}
+
+/* sehr wichtig */
+.todo.prio-5 {
+    border-color: #ff0707;
+    background: #fef2f2;
+}
+
+/* wichtig */
+.todo.prio-4 {
+    border-color: #c6552f;
+    background: #fff7ed;
+}
+
+/* mittel */
+.todo.prio-3 {
+    border-color: #f4ff1d;
+    background: #fefce8;
+}
+
+/* gering */
+.todo.prio-2 {
+    border-color: #579a37;
+    background: #f0f9ff;
+}
+
+/* optional */
+.todo.prio-1 {
+    border-color: #67a6ff;
+    background: #f8fafc;
+}
+
+/* Prio-Badge */
+.ziel-prio {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(0,0,0,0.05);
+    cursor: pointer;
+    user-select: none;
+}
+
+/* Todo: erledigt → durchstreichen */
+.todo.erledigt .ziel-text {
+    text-decoration: line-through;
+    opacity: 0.7;
+}
+
+
+
+/* ===== Einheitlicher Stil wie "nur die Zukunft" ===== */
+
+.delete-btn,
+#delete-done-todos,
+#toggle-offen,
+#toggle-wunsch-alt,
+#todo-undo {
+    padding: 7px 14px;
+    font-size: 0.8rem;
+    border-radius: 999px;
+    border: 1px solid #d1d5db;
+    background: #f3f4f6;
+    color: #1f2933;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.delete-btn:hover,
+#delete-done-todos:hover,
+#toggle-offen:hover,
+#toggle-wunsch-alt:hover,
+#todo-undo:hover {
+    background: #e5e7eb;
+}
+
+/* Aktiver Zustand (Filter an) */
+#toggle-offen.active,
+#toggle-wunsch-alt.active {
+    background: #dbeafe;
+    border-color: #93c5fd;
+}
+
