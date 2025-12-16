@@ -87,7 +87,6 @@ let lebensziele = [];
 let wuensche = [];
 let todos = [];
 let einkauf = [];
-let packing = [];
 
 function startApp(uid) {
   if (unsubscribe) unsubscribe();
@@ -107,13 +106,11 @@ function startApp(uid) {
     wuensche = data.filter(x => x.type === "wunsch");
     todos = data.filter(x => x.type === "todo");
     einkauf = data.filter(x => x.type === "einkauf");
-    packing = data.filter(x => x.type === "packing");
 
     renderLebensziele();
     renderWuensche();
     renderTodos();
     renderEinkauf();
-    renderPacking();
   });
 }
 
@@ -122,12 +119,10 @@ function clearApp() {
   wuensche = [];
   todos = [];
   einkauf = [];
-  packing = [];
   renderLebensziele();
   renderWuensche();
   renderTodos();
   renderEinkauf();
-  renderPacking();
 }
 
 
@@ -194,7 +189,6 @@ document.querySelectorAll("#menu button").forEach(btn => {
     if (target === "ziele") renderLebensziele();
     if (target === "wunsch") renderWuensche();
     if (target === "einkauf") renderEinkauf();
-    if (target === "packing") renderPacking();
   });
 });
 
@@ -709,117 +703,6 @@ einkaufText.addEventListener("keydown", e => {
 
 einkaufAddBtn.onclick = addEinkauf;
 deleteGekauftBtn.onclick = deleteAllGekauft;
-
-
-/************************************************************
- * PACKLISTE
- ************************************************************/
-
-const packingBloecke = document.querySelectorAll("#packing .ziel-block");
-const packingText = document.getElementById("packing-text");
-const packingDringlichkeit = document.getElementById("packing-dringlichkeit");
-const packingAddBtn = document.getElementById("packing-add");
-const deleteGepacktBtn = document.querySelector("#packing #delete-gepackt");
-
-function sortPacking(a, b) {
-  if (a.done !== b.done) return a.done - b.done;
-  return new Date(a.created) - new Date(b.created);
-}
-
-function renderPacking() {
-  packingBloecke.forEach(block => {
-    const container = block.querySelector(".ziel-container");
-    container.innerHTML = "";
-
-    const dring = parseInt(block.dataset.dringlichkeit);
-
-    packing
-      .filter(p => p.dringlichkeit === dring)
-      .sort(sortPacking)
-      .forEach(item => {
-        const div = document.createElement("div");
-        div.className = "ziel-item";
-        div.classList.add(item.done ? "erledigt" : "offen");
-
-        const info = document.createElement("div");
-        info.className = "ziel-info";
-
-        const text = document.createElement("span");
-        text.className = "ziel-text";
-        text.textContent = item.text;
-        if (item.done) {
-          text.style.textDecoration = "line-through";
-        }
-
-        info.append(text);
-
-        const actions = document.createElement("div");
-        actions.className = "ziel-actions";
-
-        const check = document.createElement("input");
-        check.type = "checkbox";
-        check.checked = item.done;
-        check.onchange = () => togglePacking(item.id, item.done);
-
-        const del = document.createElement("button");
-        del.className = "delete-btn";
-        del.textContent = "Löschen";
-        del.onclick = () => deletePacking(item.id);
-
-        actions.append(check, del);
-        div.append(info, actions);
-        container.append(div);
-      });
-  });
-}
-
-async function addPacking() {
-  const text = packingText.value.trim();
-  if (!text) {
-    packingText.focus();
-    return;
-  }
-
-  await addDoc(collection(db, "items"), {
-    owner: auth.currentUser.uid,
-    type: "packing",
-    text,
-    dringlichkeit: parseInt(packingDringlichkeit.value) || 2,
-    done: false,
-    created: serverTimestamp()
-  });
-
-  packingText.value = "";
-  packingText.focus();
-}
-
-async function togglePacking(id, current) {
-  await updateDoc(doc(db, "items", id), {
-    done: !current
-  });
-}
-
-async function deletePacking(id) {
-  await deleteDoc(doc(db, "items", id));
-}
-
-async function deleteAllGepackt() {
-  const gepackt = packing.filter(p => p.done);
-  
-  for (const p of gepackt) {
-    await deleteDoc(doc(db, "items", p.id));
-  }
-}
-
-packingText.addEventListener("keydown", e => {
-  if (e.key === "Enter") {
-    e.preventDefault();
-    addPacking();
-  }
-});
-
-packingAddBtn.onclick = addPacking;
-deleteGepacktBtn.onclick = deleteAllGepackt;
 
 
 /************************************************************

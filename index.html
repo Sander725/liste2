@@ -12,6 +12,7 @@
     <nav id="menu">
         <button data-list="todo">Todo</button>
         <button data-list="einkauf">Einkauf</button>
+        <button data-list="packing">Packliste</button>
         <button data-list="wunsch">Geheimes 🔒</button>
         <button data-list="ziele">Plände/Träume 🔒</button>
     </nav>
@@ -87,6 +88,38 @@
 
                 <div class="ziel-block" data-dringlichkeit="1">
                     <h3>EEEGAAAALLLL</h3>
+                    <div class="ziel-container"></div>
+                </div>
+            </div>
+        </section>
+
+
+        <section id="packing" class="list card hidden">
+            <div class="ziele-header">
+                <h2>Packliste</h2>
+                <button id="delete-gepackt">Schon im Koffer!</button>
+            </div>
+            <div class="ziel-add">
+                <h4>Was muss mit?</h4>
+                <input id="packing-text" type="text" placeholder="Artikel">
+                <select id="packing-dringlichkeit">
+                    <option value="3">1</option>
+                    <option value="2" selected>2</option>
+                    <option value="1">3</option>
+                </select>
+                <button id="packing-add">Ab auf die Liste!</button>
+            </div>
+            <div class="ziel-bloecke">
+                <div class="ziel-block" data-dringlichkeit="3">
+                    <h3>1</h3>
+                    <div class="ziel-container"></div>
+                </div>
+                <div class="ziel-block" data-dringlichkeit="2">
+                    <h3>2</h3>
+                    <div class="ziel-container"></div>
+                </div>
+                <div class="ziel-block" data-dringlichkeit="1">
+                    <h3>3</h3>
                     <div class="ziel-container"></div>
                 </div>
             </div>
