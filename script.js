@@ -58,6 +58,20 @@ loginBtn.onclick = async () => {
   }
 };
 
+emailInput.addEventListener("keydown", e => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    loginBtn.click();
+  }
+});
+
+passwordInput.addEventListener("keydown", e => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    loginBtn.click();
+  }
+});
+
 logoutBtn.onclick = async () => {
   await signOut(auth);
 };
